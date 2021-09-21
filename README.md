@@ -1,6 +1,6 @@
 # wp-custom-map
-##Development 
+##Development##
 ```npm run dev```
 
-##Production
+##Production##
 ```npm run build```

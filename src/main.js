@@ -180,8 +180,8 @@ function takeBalloon(coords, old) {
 }
 
 function findReviews(coords) {
+    let arrayPlacemark = {};
     for (const key in localStorage) {
-        let arrayPlacemark = {};
         const coordsSplited = key.split(',');
 
         if(Number(!isNaN(Number(coordsSplited[0])) && !isNaN(Number(coordsSplited[0])))) {
@@ -199,9 +199,12 @@ function findReviews(coords) {
                 if(goodCoords[1] === newCoords[1] && goodCoords[0] === newCoords[0]) {
                     console.log('Находочка');
 
-
+                    const obj = Object.assign(arrayPlacemark, {[key]: localStorage[key]});
+                    console.log(obj)
                 }
             }
         }
     }
+
+    return arrayPlacemark;
 }

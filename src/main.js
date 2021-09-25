@@ -3,13 +3,7 @@ require('./index.html');
 ymaps.ready(init);
 
 let currentCoordinates = [];
-const balloon = `<form class="form" id="form" action="">
-                    <label><h2 class="map__feedback">Отзыв:</h2></label>
-                    <label><input class="form__name" name="name" type="text" placeholder="Укажите ваше имя"></label>
-                    <label><input class="form__location" name="location" type="text" placeholder="Укажите место"></label>
-                    <label><textarea class="form__review" name="review" id="review" cols="40" rows="4" placeholder="Оставьте отзыв"></textarea></label>
-                    <label><button id="submit" type="submit">Добавить</button></label>
-                    </form>`;
+const balloon = takeBalloon();
 let placemarks = takeAllPlacemarks();
 let geoObjects = [];
 let newGeoObjects = [];
@@ -72,8 +66,7 @@ function init() {
             var coords = e.get('coords');
             map.balloon.open(coords, {
                 contentFooter: checkLocalStorage(coords),
-                contentBody: balloon
-                // contentHeader:'Событие!',
+                contentBody: takeBalloon(coords), // ПОД ВОПРОСОМ, НУЖНО КООРДЫ УБРАТЬ
             });
         }
         else {
@@ -95,7 +88,7 @@ function checkLocalStorage([latitude, longitude]) {
 function takeAllPlacemarks() {
     let allPlacemarks = [];
 
-    for (key in localStorage) {
+    for (const key in localStorage) {
         let arrayPlacemark = {};
         const coordsSplited = key.split(',');
 
@@ -109,7 +102,7 @@ function takeAllPlacemarks() {
                     latitude: newCoords[0],
                     longitude: newCoords[1],
                     hintContent: `<div class="map__hint">Широта: ${newCoords[0]}; Долгота: ${newCoords[1]}</div>`,
-                    balloonContent: balloon
+                    balloonContent: takeBalloon(`[${newCoords[0]}, ${newCoords[1]}]`, true)
                 }
 
                 allPlacemarks.push(arrayPlacemark);
@@ -157,5 +150,58 @@ function addNewPlaceMark(e) {
 
         localStorage[currentCoordinates] = stringInfo;
         close.dispatchEvent(new Event("click", {bubbles: true}));
+    }
+}
+
+function takeBalloon(coords, old) {
+    const balloon = `<form class="form" id="form" action="">
+                    <label><h2 class="map__feedback">Отзыв:</h2></label>
+                    <label><input class="form__name" name="name" type="text" placeholder="Укажите ваше имя"></label>
+                    <label><input class="form__location" name="location" type="text" placeholder="Укажите место"></label>
+                    <label><textarea class="form__review" name="review" id="review" cols="40" rows="4" placeholder="Оставьте отзыв"></textarea></label>
+                    <label><button id="submit" type="submit">Добавить</button></label>
+                    </form>`;
+
+    if (coords && old) {
+        const review = findReviews(coords);
+        let oldReviews = '';
+        const oldReview = `<li class="old-review">
+                            <div class="old-review__name">Имя</div>
+                            <div class="old-review__location">Место</div>
+                            <div class="old-review__review">Отзыв</div>
+                            </li>`;
+        oldReviews += oldReview;
+
+
+        return `<ul class="old-reviews">${oldReviews}</ul> ${balloon}`; //+
+    }
+
+    return balloon;
+}
+
+function findReviews(coords) {
+    for (const key in localStorage) {
+        let arrayPlacemark = {};
+        const coordsSplited = key.split(',');
+
+        if(Number(!isNaN(Number(coordsSplited[0])) && !isNaN(Number(coordsSplited[0])))) {
+            if(coordsSplited[0] !== undefined && coordsSplited[1] !== undefined) {
+                const newCoords = [Number(coordsSplited[0].substr(0,5)),
+                    Number(coordsSplited[1].substr(0,5))
+                ];
+                const badCoords = coords.split(`[`).join('').split(']').join('').split(`'`).join('').split(', ');
+                const goodCoords = [];
+
+                for(const el of badCoords) {
+                    goodCoords.push(Number(el));
+                }
+
+                if(goodCoords[1] === newCoords[1] && goodCoords[0] === newCoords[0]) {
+                    console.log('Находочка');
+
+
+                }
+            }
+        }
     }
 }

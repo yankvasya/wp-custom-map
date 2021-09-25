@@ -89,3 +89,54 @@
     }
   }
 }
+
+.old-reviews {
+  max-height: 160px;
+  overflow: scroll;
+  margin-left: 5px;
+  //padding-bottom: 20px;
+  text-decoration: none;
+  border-bottom: 1px solid #E7E7E7;;
+}
+
+.old-review {
+  margin-top: 20px;
+
+  &:first-child {
+    margin-top: 0px;
+  }
+
+  &__location {
+    margin-left: 8px;
+    display: inline-flex;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 16px;
+    line-height: 18px;
+    text-decoration: none;
+
+
+    color: #8F8F8F;
+  }
+
+  &__name {
+    display: inline-flex;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 16px;
+    line-height: 18px;
+
+    color: #000000;
+
+  }
+
+  &__review {
+    font-style: normal;
+    font-weight: normal;
+    font-size: 16px;
+    line-height: 18px;
+
+    color: #8F8F8F;
+
+  }
+}

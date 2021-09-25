@@ -53,6 +53,10 @@ function init() {
     function checkNewPlacemarks() {
         if(newGeoObjects.length) {
             (function () {
+                for (const mark of newGeoObjects) {
+                    const { latitude, longitude } = mark;
+                    geoObjects.push(new ymaps.Placemark([latitude, longitude]));
+                }
                 map.geoObjects.add(cluster);
                 cluster.add(newGeoObjects);
                 newGeoObjects = [];
@@ -136,7 +140,7 @@ function addNewPlaceMark(e) {
         newGeoObjects.push(new ymaps.Placemark([currentCoordinates[0], currentCoordinates[1]],
                     {
                         hintContent: `<div class="map__hint">Ширина: ${currentCoordinates[0]}; Долгота: ${currentCoordinates[1]}</div>`,
-                        balloonContent: balloon
+                        balloonContent: takeBalloon([currentCoordinates[0], currentCoordinates[1]], true, {name, location, review})
                     },
                     {
                         iconLayout: 'default#image',
@@ -153,7 +157,7 @@ function addNewPlaceMark(e) {
     }
 }
 
-function takeBalloon(coords, old) {
+function takeBalloon(coords, old, noData) {
     const balloon = `<form class="form" id="form" action="">
                     <label><h2 class="map__feedback">Отзыв:</h2></label>
                     <label><input class="form__name" name="name" type="text" placeholder="Укажите ваше имя"></label>
@@ -163,8 +167,12 @@ function takeBalloon(coords, old) {
                     </form>`;
 
     if (coords && old) {
-        const reviews = findReviews(coords);
-        const {name, location, review} = addInfoToMap(reviews);
+        const reviews = findReviews(coords, noData);
+        let {name, location, review} = addInfoToMap(reviews) ? addInfoToMap(reviews) : noData;
+
+        name = name ? name : '...';
+        location = location ? location :'...';
+        review= review ? review : '...'
 
         let oldReviews = '';
         const oldReview = `<li class="old-review">
@@ -188,12 +196,12 @@ function addInfoToMap(review) {
 
     for(let i =0; i < placemarkCoords.length; i++) {
         const {name, location, review} = JSON.parse(values[i]);
-        const [lati, long] = placemarkCoords[i].split(',');
+        // const [lati, long] = placemarkCoords[i].split(',');
 
         newArray = {
-            name: name ? name : '...',
-            location: location ? location : '...',
-            review: review ? review : '...'
+            name: name,
+            location: location,
+            review: review
         }
 
         return newArray;
@@ -210,6 +218,11 @@ function findReviews(coords) {
                 const newCoords = [Number(coordsSplited[0].substr(0,5)),
                     Number(coordsSplited[1].substr(0,5))
                 ];
+
+                if(typeof coords === 'object') {
+                    coords = `[${coords[0]}, ${coords[1]}]`;
+                }
+
                 const badCoords = coords.split(`[`).join('').split(']').join('').split(`'`).join('').split(', ');
                 const goodCoords = [];
 

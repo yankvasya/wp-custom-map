@@ -163,12 +163,14 @@ function takeBalloon(coords, old) {
                     </form>`;
 
     if (coords && old) {
-        const review = findReviews(coords);
+        const reviews = findReviews(coords);
+        const {name, location, review} = addInfoToMap(reviews);
+
         let oldReviews = '';
         const oldReview = `<li class="old-review">
-                            <div class="old-review__name">Имя</div>
-                            <div class="old-review__location">Место</div>
-                            <div class="old-review__review">Отзыв</div>
+                            <div class="old-review__name">${name}</div>
+                            <div class="old-review__location">${location}</div>
+                            <div class="old-review__review">${review}</div>
                             </li>`;
         oldReviews += oldReview;
 
@@ -177,6 +179,25 @@ function takeBalloon(coords, old) {
     }
 
     return balloon;
+}
+
+function addInfoToMap(review) {
+    const placemarkCoords = Object.keys(review);
+    const values = Object.values(review);
+    let newArray = {};
+
+    for(let i =0; i < placemarkCoords.length; i++) {
+        const {name, location, review} = JSON.parse(values[i]);
+        const [lati, long] = placemarkCoords[i].split(',');
+
+        newArray = {
+            name: name ? name : '...',
+            location: location ? location : '...',
+            review: review ? review : '...'
+        }
+
+        return newArray;
+    }
 }
 
 function findReviews(coords) {
@@ -197,10 +218,7 @@ function findReviews(coords) {
                 }
 
                 if(goodCoords[1] === newCoords[1] && goodCoords[0] === newCoords[0]) {
-                    console.log('Находочка');
-
                     const obj = Object.assign(arrayPlacemark, {[key]: localStorage[key]});
-                    console.log(obj)
                 }
             }
         }
@@ -208,3 +226,4 @@ function findReviews(coords) {
 
     return arrayPlacemark;
 }
+

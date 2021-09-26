@@ -140,3 +140,22 @@
 
   }
 }
+
+.geo-info {
+  font-size: 9px;
+  display: flex;
+  flex-direction: column;
+
+  div {
+    display: flex;
+    justify-content: space-around;
+
+    &:first-child {
+      font-weight: bold;
+    }
+  }
+}
+
+.ymaps-2-1-79-b-cluster-tabs__menu, .ymaps-2-1-79-b-cluster-tabs__menu-item, .ymaps-2-1-79-b-cluster-tabs__menu-item_current_yes {
+  display: none;
+}

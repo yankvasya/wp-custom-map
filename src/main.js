@@ -9,6 +9,7 @@ let geoObjects = [];
 let newGeoObjects = [];
 
 
+
 function init() {
     const map = new ymaps.Map('map', {
         center: [55.75, 37.64],
@@ -18,12 +19,25 @@ function init() {
         ],
         behaviors: ['drag']
     });
+    const customItemContentLayout = ymaps.templateLayoutFactory.createClass(
+        '<h2 class=ballon_header>123</h2>' +
+        '<div class=ballon_body>333</div>' +
+        '<div class=ballon_footer>333</div>'
+    );
+
     const cluster = new ymaps.Clusterer({
+        clusterDisableClickZoom: true,
+        clusterOpenBalloonOnClick: true,
+        clusterBalloonPanelMaxMapArea: 0,
+        clusterBalloonContentLayoutWidth: 330,
+        clusterBalloonContentLayoutHeight: 400,
+        clusterBalloonSidebar: 0,
+        clusterBalloonContentLayout: 'cluster#balloonCarousel',
         clusterIcons: [
             {
-                href: 'https://static.thenounproject.com/png/331066-200.png',
-                size: [70, 70],
-                offset: [-35, -35]
+                href: 'https://bit.ly/39BCmUT', // https://bit.ly/2Y0lvc3
+                size: [50, 50],
+                offset: [-25, -25]
             }
         ],
     });
@@ -38,7 +52,7 @@ function init() {
        geoObjects.push(new ymaps.Placemark([latitude, longitude],
            {
                hintContent: `<div class="map__hint">${hintContent}</div>`,
-               balloonContent: balloonContent
+               balloonContent: balloonContent,
            },
            {
                iconLayout: 'default#image',
@@ -85,13 +99,39 @@ function init() {
             map.balloon.close();
         }
     });
+    cluster.events
+        // Можно слушать сразу несколько событий, указывая их имена в массиве.
+        .add(['mouseenter', 'mouseleave', 'click'], function (e) {
+            const target = e.get('target'),
+                type = e.get('type');
+
+            if (typeof target.getGeoObjects != 'undefined') {
+                if (type == 'click') {
+                    // click cluster target
+                }
+                // Событие произошло на кластере.
+                if (type == 'mouseenter') {
+                    // попытка добавить ховер эффетк
+                    // target.options._parent._options.clusterIcons[0].href = 'https://bit.ly/2Y0lvc3';
+                    target.options.set('iconImageHref', 'https://bit.ly/2Y0lvc3');
+                } else {
+                    // target.options.set('preset', 'islands#invertedVioletClusterIcons');
+                }
+            } else {
+                // Событие произошло на геообъекте
+            }
+        });
 }
 
 // Функция для футера, в котором будут отображены текущие координаты НОВОЙ метки
 function takeCurrentCoords([latitude, longitude]) {
-    const coords = `<div>Новая точка</div>
-                    <div>Ширина: ${latitude}</div>
-                    <div>Долгота: ${longitude}</div>`
+    const coords = `<div class="geo-info">
+                        <div>Новая точка</div>
+                        <div>
+                            <span>Ширина: ${latitude}</span>
+                            <span>Долгота: ${longitude}</span>
+                        </div>
+                    </div>`
 
     currentCoordinates = [latitude, longitude];
 

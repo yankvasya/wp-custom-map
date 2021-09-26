@@ -31,6 +31,7 @@
     .form {
       display: flex;
       flex-direction: column;
+      margin: 15px 0px 20px 7px;
 
       #submit {
         margin-top: 19px;
@@ -87,4 +88,74 @@
       }
     }
   }
+}
+
+.old-reviews {
+  max-height: 160px;
+  overflow: scroll;
+  margin-left: 5px;
+  //padding-bottom: 20px;
+  text-decoration: none;
+  border-bottom: 1px solid #E7E7E7;;
+}
+
+.old-review {
+  margin-top: 20px;
+
+  &:first-child {
+    margin-top: 0px;
+  }
+
+  &__location {
+    margin-left: 8px;
+    display: inline-flex;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 16px;
+    line-height: 18px;
+    text-decoration: none;
+
+
+    color: #8F8F8F;
+  }
+
+  &__name {
+    display: inline-flex;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 16px;
+    line-height: 18px;
+
+    color: #000000;
+
+  }
+
+  &__review {
+    font-style: normal;
+    font-weight: normal;
+    font-size: 16px;
+    line-height: 18px;
+
+    color: #8F8F8F;
+
+  }
+}
+
+.geo-info {
+  font-size: 9px;
+  display: flex;
+  flex-direction: column;
+
+  div {
+    display: flex;
+    justify-content: space-around;
+
+    &:first-child {
+      font-weight: bold;
+    }
+  }
+}
+
+.ymaps-2-1-79-b-cluster-tabs__menu, .ymaps-2-1-79-b-cluster-tabs__menu-item, .ymaps-2-1-79-b-cluster-tabs__menu-item_current_yes {
+  display: none;
 }

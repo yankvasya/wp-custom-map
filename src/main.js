@@ -3,7 +3,7 @@ require('./index.html');
 ymaps.ready(init);
 
 let currentCoordinates = [];
-const balloon = takeBalloon();
+const balloon = (coords) => takeBalloon(coords);
 let placemarks = takeAllPlacemarks();
 let geoObjects = [];
 let newGeoObjects = [];
@@ -28,9 +28,11 @@ function init() {
         ],
     });
 
-    setInterval(checkNewPlacemarks, 500)
+    // интервал на добавление новых плейсмарков
+    setInterval(checkNewPlacemarks, 50)
 
-
+    // Прогружает разово все плейсмарки, что хранятся в localstorage
+    // p.s на этой стадии запускается takeAllPlacemarks()
     for (const mark of placemarks) {
        const { latitude, longitude, hintContent, balloonContent } = mark;
        geoObjects.push(new ymaps.Placemark([latitude, longitude],
@@ -50,6 +52,9 @@ function init() {
     map.geoObjects.add(cluster);
     cluster.add(geoObjects);
 
+    // Интервал постоянно запускает эту функцию
+    // При появление в newGeoObject новых координат запускает добавление новой метки
+    // После действия чистит newGeoObject
     function checkNewPlacemarks() {
         if(newGeoObjects.length) {
             (function () {
@@ -65,12 +70,15 @@ function init() {
         }
     }
 
+    // Работает только при попытке добавить НОВУЮ точку на карте
+    // Запускает функцию takeCurrentCoords (для получения текущих координат и отображении в футере)
+    // Также запускает balloon для создания балуна
     map.events.add('click', function (e) {
         if (!map.balloon.isOpen()) {
             var coords = e.get('coords');
             map.balloon.open(coords, {
-                contentFooter: checkLocalStorage(coords),
-                contentBody: takeBalloon(coords), // ПОД ВОПРОСОМ, НУЖНО КООРДЫ УБРАТЬ
+                contentFooter: takeCurrentCoords(coords),
+                contentBody: balloon(coords), // ПОД ВОПРОСОМ, НУЖНО КООРДЫ УБРАТЬ
             });
         }
         else {
@@ -79,7 +87,8 @@ function init() {
     });
 }
 
-function checkLocalStorage([latitude, longitude]) {
+// Функция для футера, в котором будут отображены текущие координаты НОВОЙ метки
+function takeCurrentCoords([latitude, longitude]) {
     const coords = `<div>Новая точка</div>
                     <div>Ширина: ${latitude}</div>
                     <div>Долгота: ${longitude}</div>`
@@ -89,6 +98,8 @@ function checkLocalStorage([latitude, longitude]) {
     return coords;
 }
 
+// Функция тащит из localstorage данные, проверяет, что название соответствует возможным координатам
+// Возвращает объект со всеми записанными координатами и их данными (Имя, место, отзыв)
 function takeAllPlacemarks() {
     let allPlacemarks = [];
 
@@ -117,14 +128,18 @@ function takeAllPlacemarks() {
     return allPlacemarks;
 }
 
+// Если клик произошел по кнопке, то запускает функцию addNewPlaceMark(e);
 document.addEventListener('click', (e) => {
-      e.preventDefault();
-      addNewPlaceMark(e);
-  });
-
-function addNewPlaceMark(e) {
-    if(e.target.tagName === 'BUTTON') {
+    if(e.target.tagName === 'BUTTON' && e.target.classList.contains('form__submit-button')) {
         e.preventDefault();
+      addNewPlaceMark(e);
+    }
+});
+
+// Собирает данные из формы, пушит в newGeoObject эти данные вскоре обрабатываются тем setInterval внутри init()
+// После все данные собирает в объект, который по итогу превращает в строку
+// Вызывается localStorage[текущие,координаты] = строка данных (которую можно будет распарсить)
+function addNewPlaceMark(e) {
         const form = e.target.closest('form');
         const name = form.elements.name.value;
         const location = form.elements.location.value;
@@ -135,12 +150,12 @@ function addNewPlaceMark(e) {
             review: review
         };
         const stringInfo = JSON.stringify(infoPlacemark);
-        const close = document.querySelector('.ymaps-2-1-79-balloon__close-button');
 
-        newGeoObjects.push(new ymaps.Placemark([currentCoordinates[0], currentCoordinates[1]],
+        newGeoObjects.push(new ymaps.Placemark(
+                    [currentCoordinates[0], currentCoordinates[1]],
                     {
                         hintContent: `<div class="map__hint">Ширина: ${currentCoordinates[0]}; Долгота: ${currentCoordinates[1]}</div>`,
-                        balloonContent: takeBalloon([currentCoordinates[0], currentCoordinates[1]], true, {name, location, review})
+                        balloonContent: takeBalloon([currentCoordinates[0], currentCoordinates[1]], {name, location, review})
                     },
                     {
                         iconLayout: 'default#image',
@@ -150,23 +165,28 @@ function addNewPlaceMark(e) {
                     }
                 ));
 
-
-
         localStorage[currentCoordinates] = stringInfo;
+
+        // При сабмите закрывает балун
+        const close = document.querySelector('.ymaps-2-1-79-balloon__close-button');
         close.dispatchEvent(new Event("click", {bubbles: true}));
-    }
 }
 
-function takeBalloon(coords, old, noData) {
+// Отвечает за создание балуна (разметка + отзывы по текущим координватам)
+// На входе принимает координаты (coords)
+// Также принимает noData, для новых меток, а именно принимает {имя, место, отзыв}
+// Внутри вызывает 2 функции: findReviews и addIndoToMap
+function takeBalloon(coords, noData) {
     const balloon = `<form class="form" id="form" action="">
                     <label><h2 class="map__feedback">Отзыв:</h2></label>
                     <label><input class="form__name" name="name" type="text" placeholder="Укажите ваше имя"></label>
                     <label><input class="form__location" name="location" type="text" placeholder="Укажите место"></label>
                     <label><textarea class="form__review" name="review" id="review" cols="40" rows="4" placeholder="Оставьте отзыв"></textarea></label>
-                    <label><button id="submit" type="submit">Добавить</button></label>
+                    <label><button class="form__submit-button" id="submit" type="submit">Добавить</button></label>
                     </form>`;
 
-    if (coords && old) {
+    if (coords && noData) {
+        // зачем я кидаю noData в аргументы findReviews ? - я не знаю :)
         const reviews = findReviews(coords, noData);
         let {name, location, review} = addInfoToMap(reviews) ? addInfoToMap(reviews) : noData;
 
@@ -189,42 +209,32 @@ function takeBalloon(coords, old, noData) {
     return balloon;
 }
 
-function addInfoToMap(review) {
-    const placemarkCoords = Object.keys(review);
-    const values = Object.values(review);
-    let newArray = {};
-
-    for(let i =0; i < placemarkCoords.length; i++) {
-        const {name, location, review} = JSON.parse(values[i]);
-        // const [lati, long] = placemarkCoords[i].split(',');
-
-        newArray = {
-            name: name,
-            location: location,
-            review: review
-        }
-
-        return newArray;
-    }
-}
-
+// Сверяет координаты(coords) со всеми записанными координатами в localStorage
+// В случае нахождения вернет объект, внутри которого будут записаны координаты и данные по этим коодинатам
 function findReviews(coords) {
     let arrayPlacemark = {};
     for (const key in localStorage) {
         const coordsSplited = key.split(',');
 
-        if(Number(!isNaN(Number(coordsSplited[0])) && !isNaN(Number(coordsSplited[0])))) {
+        if(Number(!isNaN(Number(coordsSplited[0])) && !isNaN(Number(coordsSplited[1])))) {
             if(coordsSplited[0] !== undefined && coordsSplited[1] !== undefined) {
                 const newCoords = [Number(coordsSplited[0].substr(0,5)),
                     Number(coordsSplited[1].substr(0,5))
                 ];
 
+                // Если на входе придет объект, то он его превратит в строку нужного вида :)
                 if(typeof coords === 'object') {
                     coords = `[${coords[0]}, ${coords[1]}]`;
                 }
 
-                const badCoords = coords.split(`[`).join('').split(']').join('').split(`'`).join('').split(', ');
                 const goodCoords = [];
+                const badCoords = coords.split(`[`)
+                    .join('')
+                    .split(']')
+                    .join('')
+                    .split(`'`)
+                    .join('')
+                    .split(', ');
 
                 for(const el of badCoords) {
                     goodCoords.push(Number(el));
@@ -239,4 +249,20 @@ function findReviews(coords) {
 
     return arrayPlacemark;
 }
+
+// На входе ловит данные в формате объекта, в котором {координаты,точки: name, location, review}
+// Собирает ключ объекта и его значение
+// Парсит review и возвращает объект с данными
+//
+function addInfoToMap(review) {
+    const placemarkCoords = Object.keys(review);
+    const values = Object.values(review);
+    let parsedReview = {};
+
+    for(let i =0; i < placemarkCoords.length; i++) {
+        parsedReview = JSON.parse(values[i]);
+        return parsedReview;
+    }
+}
+
 

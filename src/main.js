@@ -19,12 +19,15 @@ function init() {
     });
     const cluster = new ymaps.Clusterer({
         clusterDisableClickZoom: true,
-        clusterOpenBalloonOnClick: true,
+        // clusterOpenBalloonOnClick: true,
         clusterBalloonPanelMaxMapArea: 0,
         clusterBalloonContentLayoutWidth: 330,
         clusterBalloonContentLayoutHeight: 470,
-        clusterBalloonSidebar: 0,
+        // clusterBalloonSidebar: 0,
+        // clusterBalloonPagerSize: 0, // убрал страницы
+        clusterBalloonPagerVisible: false, // полностью убирает нижнее меню
         clusterBalloonContentLayout: 'cluster#balloonCarousel',
+        clusterBalloonContentBodyLayout: "cluster#balloonAccordionContent",
         clusterIcons: [
             {
                 href: 'https://bit.ly/39BCmUT', // https://bit.ly/2Y0lvc3
@@ -279,6 +282,8 @@ function findReviews(coords) {
                 const newCoords = [Number(coordsSplited[0].substr(0,5)),
                     Number(coordsSplited[1].substr(0,5))
                 ];
+
+                console.log(key)
 
                 const goodCoords = [];
                 const badCoords = coords.split(`[`)

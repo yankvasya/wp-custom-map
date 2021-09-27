@@ -22,7 +22,7 @@ function init() {
         clusterOpenBalloonOnClick: true,
         clusterBalloonPanelMaxMapArea: 0,
         clusterBalloonContentLayoutWidth: 330,
-        clusterBalloonContentLayoutHeight: 400,
+        clusterBalloonContentLayoutHeight: 470,
         clusterBalloonSidebar: 0,
         clusterBalloonContentLayout: 'cluster#balloonCarousel',
         clusterIcons: [
@@ -218,30 +218,48 @@ function takeBalloon(coords, feedback) {
                     </form>`;
 
     if (coords) {
-        // зачем я кидаю noData в аргументы findReviews ? - я не знаю :) // Временно уберу
-        console.log(feedback)
-        const reviews = findReviews(coords);
-        const data = (feedback) ? feedback : addInfoToMap(reviews);
+        return pushReviews(coords, feedback, balloon);
+    }
 
-        const { name, location, review} = {
-            name: (data.name !== undefined && data.name.length > 0) ? data.name : '...',
-            location: (data.location !== undefined && data.location.length > 0) ? data.location : '...',
-            review: (data.review !==undefined && data.review.length > 0) ? data.review : '...'
+    return balloon;
+}
+
+// Пушит отзывы в балун
+function pushReviews(coords, feedback, balloon) {
+    const reviews = findReviews(coords);
+    const data = feedback ? feedback : addInfoToMap(reviews);
+
+    return oldReviewPush(data, balloon);
+}
+
+// Функция отвечает непосредственно за создание группы отзывов
+function oldReviewPush(data, balloon) {
+    let oldReviews = '';
+    if (Array.isArray(data)) {
+        for (const el of data) {
+            const item = pushToBalloon(el, balloon);
+            oldReviews += item;
         }
+    } else {
+       const item = pushToBalloon(data, balloon);
+        oldReviews += item;
+    }
 
-        let oldReviews = '';
-        const oldReview = `<li class="old-review">
+    return `<ul class="old-reviews">${oldReviews}</ul> ${balloon}`; //+
+}
+
+// Отвечает за создание отдельного li элемента (отдельно взятого отзыва)
+function pushToBalloon(data) {
+    const { name, location, review} = {
+        name: (data.name !== undefined && data.name.length > 0) ? data.name : '...',
+        location: (data.location !== undefined && data.location.length > 0) ? data.location : '...',
+        review: (data.review !==undefined && data.review.length > 0) ? data.review : '...'
+    }
+    return `<li class="old-review">
                             <div class="old-review__name">${name}</div>
                             <div class="old-review__location">[${location}]</div>
                             <div class="old-review__review">${review}</div>
                             </li>`;
-
-        oldReviews += oldReview;
-
-        return `<ul class="old-reviews">${oldReviews}</ul> ${balloon}`; //+
-    }
-
-    return balloon;
 }
 
 // Сверяет координаты(coords) со всеми записанными координатами в localStorage
@@ -287,22 +305,17 @@ function findReviews(coords) {
 
 // На входе ловит данные в формате объекта, в котором {координаты,точки: name, location, review}
 // Собирает ключ объекта и его значение
-// Парсит review и возвращает объект с данными
+// Парсит review и возвращает массив с данными
 //
 function addInfoToMap(review) {
+    let parsedReview = [];
     if (JSON.stringify(review) === '{}') {
         return false;
     }
-    const placemarkCoords = Object.keys(review);
-    const values = Object.values(review);
-    let parsedReview = {};
 
-    for(let i =0; i < placemarkCoords.length; i++) {
-        let parse = JSON.parse(values[i]);
-        Object.assign(parsedReview, parse);
+    for (const key in review) {
+        parsedReview.push(JSON.parse(review[key]));
     }
-
-    // placemarkCoords.forEach((el) => console.log(placemarkCoords[el]))
 
     return parsedReview;
 }

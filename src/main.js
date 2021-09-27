@@ -3,12 +3,10 @@ require('./index.html');
 ymaps.ready(init);
 
 let currentCoordinates = [];
-const balloon = (coords) => takeBalloon(coords);
+const balloon = (coords, feedback) => takeBalloon(coords, feedback);
 let placemarks = takeAllPlacemarks();
 let geoObjects = [];
 let newGeoObjects = [];
-
-
 
 function init() {
     const map = new ymaps.Map('map', {
@@ -19,12 +17,6 @@ function init() {
         ],
         behaviors: ['drag']
     });
-    const customItemContentLayout = ymaps.templateLayoutFactory.createClass(
-        '<h2 class=ballon_header>123</h2>' +
-        '<div class=ballon_body>333</div>' +
-        '<div class=ballon_footer>333</div>'
-    );
-
     const cluster = new ymaps.Clusterer({
         clusterDisableClickZoom: true,
         clusterOpenBalloonOnClick: true,
@@ -89,10 +81,10 @@ function init() {
     // Также запускает balloon для создания балуна
     map.events.add('click', function (e) {
         if (!map.balloon.isOpen()) {
-            var coords = e.get('coords');
+            const coords = e.get('coords');
             map.balloon.open(coords, {
                 contentFooter: takeCurrentCoords(coords),
-                contentBody: balloon(coords), // ПОД ВОПРОСОМ, НУЖНО КООРДЫ УБРАТЬ
+                contentBody: balloon(), // ПОД ВОПРОСОМ, НУЖНО КООРДЫ УБРАТЬ
             });
         }
         else {
@@ -103,22 +95,22 @@ function init() {
         // Можно слушать сразу несколько событий, указывая их имена в массиве.
         .add(['mouseenter', 'mouseleave', 'click'], function (e) {
             const target = e.get('target'),
-                type = e.get('type');
+                type = e.get('type'),
+                coords = e.get('coords');
+
 
             if (typeof target.getGeoObjects != 'undefined') {
                 if (type == 'click') {
                     // click cluster target
-                }
-                // Событие произошло на кластере.
-                if (type == 'mouseenter') {
-                    // попытка добавить ховер эффетк
-                    // target.options._parent._options.clusterIcons[0].href = 'https://bit.ly/2Y0lvc3';
-                    target.options.set('iconImageHref', 'https://bit.ly/2Y0lvc3');
-                } else {
-                    // target.options.set('preset', 'islands#invertedVioletClusterIcons');
+                    currentCoordinates = coords;
+                    balloon(coords);
                 }
             } else {
-                // Событие произошло на геообъекте
+                if (type == 'click') {
+                    // Событие произошло на геообъекте
+                    currentCoordinates = coords;
+                    balloon(coords);
+                }
             }
         });
 }
@@ -157,12 +149,13 @@ function takeAllPlacemarks() {
                     latitude: newCoords[0],
                     longitude: newCoords[1],
                     hintContent: `<div class="map__hint">Широта: ${newCoords[0]}; Долгота: ${newCoords[1]}</div>`,
-                    balloonContent: takeBalloon(`[${newCoords[0]}, ${newCoords[1]}]`, true)
+                    balloonContent: takeBalloon(`[${newCoords[0]}, ${newCoords[1]}]`)
                 }
 
                 allPlacemarks.push(arrayPlacemark);
             }
         }
+
     }
 
     return allPlacemarks;
@@ -190,12 +183,13 @@ function addNewPlaceMark(e) {
             review: review
         };
         const stringInfo = JSON.stringify(infoPlacemark);
+        localStorage[currentCoordinates] = stringInfo;
 
-        newGeoObjects.push(new ymaps.Placemark(
+    newGeoObjects.push(new ymaps.Placemark(
                     [currentCoordinates[0], currentCoordinates[1]],
                     {
                         hintContent: `<div class="map__hint">Ширина: ${currentCoordinates[0]}; Долгота: ${currentCoordinates[1]}</div>`,
-                        balloonContent: takeBalloon([currentCoordinates[0], currentCoordinates[1]], {name, location, review})
+                        balloonContent: balloon([currentCoordinates[0], currentCoordinates[1]], {name, location, review})
                     },
                     {
                         iconLayout: 'default#image',
@@ -204,8 +198,6 @@ function addNewPlaceMark(e) {
                         iconImageOffset: [-15, -30]
                     }
                 ));
-
-        localStorage[currentCoordinates] = stringInfo;
 
         // При сабмите закрывает балун
         const close = document.querySelector('.ymaps-2-1-79-balloon__close-button');
@@ -216,32 +208,35 @@ function addNewPlaceMark(e) {
 // На входе принимает координаты (coords)
 // Также принимает noData, для новых меток, а именно принимает {имя, место, отзыв}
 // Внутри вызывает 2 функции: findReviews и addIndoToMap
-function takeBalloon(coords, noData) {
-    const balloon = `<form class="form" id="form" action="">
-                    <label><h2 class="map__feedback">Отзыв:</h2></label>
-                    <label><input class="form__name" name="name" type="text" placeholder="Укажите ваше имя"></label>
-                    <label><input class="form__location" name="location" type="text" placeholder="Укажите место"></label>
-                    <label><textarea class="form__review" name="review" id="review" cols="40" rows="4" placeholder="Оставьте отзыв"></textarea></label>
+function takeBalloon(coords, feedback) {
+    const balloon = `<form class="form" id="form" action="" autocomplete="off">
+                    <label><h2 class="map__feedback" autocomplete="off">Отзыв:</h2></label>
+                    <label><input class="form__name" name="name" type="text" placeholder="Укажите ваше имя" autocomplete="off"></label>
+                    <label><input class="form__location" name="location" type="text" placeholder="Укажите место" autocomplete="off"></label>
+                    <label><textarea class="form__review" name="review" id="review" cols="40" rows="4" placeholder="Оставьте отзыв" autocomplete="off"></textarea></label>
                     <label><button class="form__submit-button" id="submit" type="submit">Добавить</button></label>
                     </form>`;
 
-    if (coords && noData) {
-        // зачем я кидаю noData в аргументы findReviews ? - я не знаю :)
-        const reviews = findReviews(coords, noData);
-        let {name, location, review} = addInfoToMap(reviews) ? addInfoToMap(reviews) : noData;
+    if (coords) {
+        // зачем я кидаю noData в аргументы findReviews ? - я не знаю :) // Временно уберу
+        console.log(feedback)
+        const reviews = findReviews(coords);
+        const data = (feedback) ? feedback : addInfoToMap(reviews);
 
-        name = name ? name : '...';
-        location = location ? location :'...';
-        review= review ? review : '...'
+        const { name, location, review} = {
+            name: (data.name !== undefined && data.name.length > 0) ? data.name : '...',
+            location: (data.location !== undefined && data.location.length > 0) ? data.location : '...',
+            review: (data.review !==undefined && data.review.length > 0) ? data.review : '...'
+        }
 
         let oldReviews = '';
         const oldReview = `<li class="old-review">
                             <div class="old-review__name">${name}</div>
-                            <div class="old-review__location">${location}</div>
+                            <div class="old-review__location">[${location}]</div>
                             <div class="old-review__review">${review}</div>
                             </li>`;
-        oldReviews += oldReview;
 
+        oldReviews += oldReview;
 
         return `<ul class="old-reviews">${oldReviews}</ul> ${balloon}`; //+
     }
@@ -252,7 +247,12 @@ function takeBalloon(coords, noData) {
 // Сверяет координаты(coords) со всеми записанными координатами в localStorage
 // В случае нахождения вернет объект, внутри которого будут записаны координаты и данные по этим коодинатам
 function findReviews(coords) {
+    // Если на входе придет объект, то он его превратит в строку нужного вида :)
+    if(typeof coords === 'object') {
+        coords = `[${coords[0].toString().substr(0,5)}, ${coords[1].toString().substr(0,5)}]`;
+    }
     let arrayPlacemark = {};
+
     for (const key in localStorage) {
         const coordsSplited = key.split(',');
 
@@ -261,11 +261,6 @@ function findReviews(coords) {
                 const newCoords = [Number(coordsSplited[0].substr(0,5)),
                     Number(coordsSplited[1].substr(0,5))
                 ];
-
-                // Если на входе придет объект, то он его превратит в строку нужного вида :)
-                if(typeof coords === 'object') {
-                    coords = `[${coords[0]}, ${coords[1]}]`;
-                }
 
                 const goodCoords = [];
                 const badCoords = coords.split(`[`)
@@ -295,14 +290,21 @@ function findReviews(coords) {
 // Парсит review и возвращает объект с данными
 //
 function addInfoToMap(review) {
+    if (JSON.stringify(review) === '{}') {
+        return false;
+    }
     const placemarkCoords = Object.keys(review);
     const values = Object.values(review);
     let parsedReview = {};
 
     for(let i =0; i < placemarkCoords.length; i++) {
-        parsedReview = JSON.parse(values[i]);
-        return parsedReview;
+        let parse = JSON.parse(values[i]);
+        Object.assign(parsedReview, parse);
     }
+
+    // placemarkCoords.forEach((el) => console.log(placemarkCoords[el]))
+
+    return parsedReview;
 }
 
 

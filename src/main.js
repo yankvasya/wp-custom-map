@@ -30,9 +30,9 @@ function init() {
         clusterBalloonContentBodyLayout: "cluster#balloonAccordionContent",
         clusterIcons: [
             {
-                href: 'https://bit.ly/39BCmUT', // https://bit.ly/2Y0lvc3
-                size: [50, 50],
-                offset: [-25, -25]
+                href: 'https://i.ibb.co/2M1V4T3/claster.png', // https://bit.ly/2Y0lvc3
+                size: [100, 100],
+                offset: [-50, -50]
             }
         ],
     });
@@ -103,13 +103,13 @@ function init() {
 
 
             if (typeof target.getGeoObjects != 'undefined') {
-                if (type == 'click') {
+                if (type === 'click') {
                     // click cluster target
                     currentCoordinates = coords;
                     balloon(coords);
                 }
             } else {
-                if (type == 'click') {
+                if (type === 'click') {
                     // Событие произошло на геообъекте
                     currentCoordinates = coords;
                     balloon(coords);
@@ -213,7 +213,7 @@ function addNewPlaceMark(e) {
 // Внутри вызывает 2 функции: findReviews и addIndoToMap
 function takeBalloon(coords, feedback) {
     const balloon = `<form class="form" id="form" action="" autocomplete="off">
-                    <label><h2 class="map__feedback" autocomplete="off">Отзыв:</h2></label>
+                    <label><h2 class="map__feedback" >Отзыв:</h2></label>
                     <label><input class="form__name" name="name" type="text" placeholder="Укажите ваше имя" autocomplete="off"></label>
                     <label><input class="form__location" name="location" type="text" placeholder="Укажите место" autocomplete="off"></label>
                     <label><textarea class="form__review" name="review" id="review" cols="40" rows="4" placeholder="Оставьте отзыв" autocomplete="off"></textarea></label>

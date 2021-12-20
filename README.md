@@ -1,6 +1,6 @@
 # wp-custom-map
 
-#### Html, SCSS, JS, Yandex API
+#### Html, SCSS, JS, Yandex API, Webpack
 
 
 
